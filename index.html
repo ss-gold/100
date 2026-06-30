@@ -14,7 +14,9 @@
   <section id="letter" class="screen">
     <div class="letter-stage">
       <img class="open-envelope" src="https://i.imgur.com/Ln5MVpU.png" alt="열린 편지봉투" />
-      <article class="paper"><div id="ransomText"></div></article>
+      <article class="threat-paper">
+        <div id="ransomText"></div>
+      </article>
       <button id="startButton">시작하기</button>
     </div>
   </section>
@@ -39,14 +41,15 @@
 
   <section id="final" class="screen">
     <article class="letter-page">
-      <h1>편지</h1>
       <div id="letterContent"></div>
     </article>
   </section>
 
   <button id="inventoryButton" class="fixed-button">인벤토리</button>
+  <button id="resetButton" class="fixed-button always">처음부터</button>
   <button id="backButton" class="fixed-button">서재로 이동</button>
   <button id="musicButton" class="fixed-button">일시정지</button>
+
   <audio id="bgm" preload="auto"></audio>
 
   <div id="modalBackdrop" class="modal-backdrop">
@@ -59,6 +62,6 @@
     </div>
   </div>
 
-  <script src="script.js"></script>
+  <script src="script.js?v=final-complete-20260630"></script>
 </body>
 </html>

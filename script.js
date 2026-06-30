@@ -7,6 +7,8 @@ const CONFIG = {
   audioBottom: "audio/2.mp3",
   noteIcon: "https://i.imgur.com/uCdRAbl.png",
   chairIcon: "https://i.imgur.com/LusdrYD.png",
+  letterApiUrl: "https://script.google.com/macros/s/AKfycbzC2zYTUMFx0DlFYRavlXB9-yXBS6zs5KokuJklHHDqVZyZkXUgq4Gwowb995X746jrdg/exec",
+  finalSecret: "NO SMOKING",
   uniforms: {
     ganghak: "https://i.imgur.com/cNkbT1s.png",
     byeoksan: "https://i.imgur.com/755qF5Q.png",
@@ -16,9 +18,8 @@ const CONFIG = {
   }
 };
 
-const STORAGE_KEY = "ysi_escape_final_v2_inventory";
-const LETTER_API_URL = "https://script.google.com/macros/s/AKfycbzC2zYTUMFx0DlFYRavlXB9-yXBS6zs5KokuJklHHDqVZyZkXUgq4Gwowb995X746jrdg/exec";
-const FINAL_SECRET = "NO SMOKING";
+const STORAGE_KEY = "ysi_escape_final_complete_inventory";
+const $ = (query) => document.querySelector(query);
 
 const ITEMS = {
   byeoksan: { type: "uniform", name: "벽산 교복", img: CONFIG.uniforms.byeoksan },
@@ -35,29 +36,57 @@ const ITEMS = {
   memoWindow: { type: "memo", name: "숫자야구 메모", code: "65249", result: "0S 1B", img: CONFIG.noteIcon }
 };
 
-const state = { inventory: loadInventory(), currentAudio: null };
-const $ = (q) => document.querySelector(q);
+const state = {
+  inventory: loadInventory(),
+  currentAudio: null
+};
 
-const screens = { intro: $("#intro"), letter: $("#letter"), study: $("#study"), room2: $("#room2"), final: $("#final") };
-const modal = { backdrop: $("#modalBackdrop"), title: $("#modalTitle"), text: $("#modalText"), extra: $("#modalExtra"), message: $("#modalMessage"), actions: $("#modalActions") };
+const screens = {
+  intro: $("#intro"),
+  letter: $("#letter"),
+  study: $("#study"),
+  room2: $("#room2"),
+  final: $("#final")
+};
+
+const modal = {
+  backdrop: $("#modalBackdrop"),
+  title: $("#modalTitle"),
+  text: $("#modalText"),
+  extra: $("#modalExtra"),
+  message: $("#modalMessage"),
+  actions: $("#modalActions")
+};
+
 const maskStore = {};
-
 $("#room2Visible").src = CONFIG.room2Visible;
 
 function showScreen(name) {
   Object.values(screens).forEach((screen) => screen.classList.remove("active"));
   screens[name].classList.add("active");
+
   $("#inventoryButton").classList.toggle("active", ["study", "room2"].includes(name));
   $("#backButton").classList.toggle("active", name === "room2");
+
   window.scrollTo(0, 0);
 }
 
 function loadInventory() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); }
-  catch { return []; }
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+  } catch {
+    return [];
+  }
 }
-function saveInventory() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state.inventory)); }
-function hasItem(id) { return state.inventory.includes(id); }
+
+function saveInventory() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state.inventory));
+}
+
+function hasItem(id) {
+  return state.inventory.includes(id);
+}
+
 function addItem(id) {
   if (!hasItem(id)) {
     state.inventory.push(id);
@@ -66,9 +95,16 @@ function addItem(id) {
   }
   return false;
 }
-function normalizeAnswer(value) { return (value || "").trim().replace(/\s+/g, "").toLowerCase(); }
+
+function normalizeAnswer(value) {
+  return (value || "").trim().replace(/\s+/g, "").toLowerCase();
+}
+
 function formatText(text) {
-  return String(text || "").replaceAll("…….", "……").replace(/\n{3,}/g, "\n\n").trim();
+  return String(text || "")
+    .replaceAll("…….", "……")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 }
 
 function openModal({ title = "", text = "", extra = null, choices = [] }) {
@@ -77,20 +113,30 @@ function openModal({ title = "", text = "", extra = null, choices = [] }) {
   modal.extra.innerHTML = "";
   modal.message.textContent = "";
   modal.actions.innerHTML = "";
+
   if (extra) modal.extra.append(extra);
   if (choices.length) modal.extra.append(makeChoiceList(choices));
+
   const closeButton = document.createElement("button");
   closeButton.textContent = "닫기";
   closeButton.addEventListener("click", closeModal);
   modal.actions.append(closeButton);
+
   modal.backdrop.classList.add("active");
 }
-function closeModal() { modal.backdrop.classList.remove("active"); }
-modal.backdrop.addEventListener("click", (event) => { if (event.target === modal.backdrop) closeModal(); });
+
+function closeModal() {
+  modal.backdrop.classList.remove("active");
+}
+
+modal.backdrop.addEventListener("click", (event) => {
+  if (event.target === modal.backdrop) closeModal();
+});
 
 function makeChoiceList(choices) {
   const list = document.createElement("div");
   list.className = "choice-list";
+
   choices.forEach((choice) => {
     const item = document.createElement("a");
     item.className = "choice";
@@ -98,6 +144,7 @@ function makeChoiceList(choices) {
     item.addEventListener("click", choice.onClick);
     list.append(item);
   });
+
   return list;
 }
 
@@ -106,11 +153,19 @@ function makeAnswerBox(correct, onSuccess, placeholder = "정답 입력") {
   const input = document.createElement("input");
   input.className = "text-answer";
   input.placeholder = placeholder;
+
   const check = () => {
-    if (normalizeAnswer(input.value) === normalizeAnswer(correct)) onSuccess();
-    else modal.message.textContent = "틀렸다.";
+    if (normalizeAnswer(input.value) === normalizeAnswer(correct)) {
+      onSuccess();
+    } else {
+      modal.message.textContent = "틀렸다.";
+    }
   };
-  input.addEventListener("keydown", (event) => { if (event.key === "Enter") check(); });
+
+  input.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") check();
+  });
+
   wrap.append(input);
   wrap.append(makeChoiceList([{ label: "확인", onClick: check }]));
   return wrap;
@@ -120,8 +175,11 @@ function memoChoice(id) {
   return {
     label: hasItem(id) ? "✓ 메모를 챙겼다" : "메모 챙기기",
     onClick: () => {
-      if (addItem(id)) modal.message.textContent = "메모를 인벤토리에 넣었다.";
-      else modal.message.textContent = "이미 챙겼다.";
+      if (addItem(id)) {
+        modal.message.textContent = "메모를 인벤토리에 넣었다.";
+      } else {
+        modal.message.textContent = "이미 챙겼다.";
+      }
     }
   };
 }
@@ -129,26 +187,32 @@ function memoChoice(id) {
 function makeInventoryPicker(onPick) {
   const grid = document.createElement("div");
   grid.className = "inv-grid";
+
   if (state.inventory.length === 0) {
     const empty = document.createElement("p");
     empty.textContent = "아무것도 없다.";
     grid.append(empty);
     return grid;
   }
+
   state.inventory.forEach((id) => {
     const item = ITEMS[id];
     const row = document.createElement("div");
     row.className = "inv-item";
-    const img = document.createElement("img");
-    img.src = item.img;
-    img.alt = item.name;
-    row.append(img);
+
+    const image = document.createElement("img");
+    image.src = item.img;
+    image.alt = item.name;
+    row.append(image);
+
     const label = document.createElement("span");
     label.textContent = item.type === "memo" ? `${item.code} ${item.result}` : item.name;
     row.append(label);
+
     row.addEventListener("click", () => onPick(id, item));
     grid.append(row);
   });
+
   return grid;
 }
 
@@ -157,24 +221,48 @@ function openInventory() {
     title: "인벤토리",
     text: "",
     extra: makeInventoryPicker((id, item) => {
-      if (item.type === "memo") openModal({ title: "숫자야구 메모", text: `${item.code}\n${item.result}` });
+      if (item.type === "memo") {
+        openModal({
+          title: "숫자야구 메모",
+          text: `${item.code}\n${item.result}`
+        });
+      }
     })
   });
 }
+
 $("#inventoryButton").addEventListener("click", openInventory);
+
+$("#resetButton").addEventListener("click", () => {
+  openModal({
+    title: "처음부터",
+    text: "처음부터 다시 시작할까?\n인벤토리와 진행상태가 모두 초기화된다.",
+    choices: [{
+      label: "처음부터 다시 하기",
+      onClick: () => {
+        localStorage.removeItem(STORAGE_KEY);
+        location.href = location.pathname + "?reset=" + Date.now();
+      }
+    }]
+  });
+});
 
 function playAudio(src) {
   const audio = $("#bgm");
+
   if (state.currentAudio !== src) {
     audio.src = src;
     state.currentAudio = src;
   }
+
   audio.play().catch(() => {});
   $("#musicButton").classList.add("active");
   $("#musicButton").textContent = "일시정지";
 }
+
 $("#musicButton").addEventListener("click", () => {
   const audio = $("#bgm");
+
   if (audio.paused) {
     audio.play();
     $("#musicButton").textContent = "일시정지";
@@ -196,12 +284,15 @@ const ransomLines = [
 function makeRansomText() {
   const box = $("#ransomText");
   box.innerHTML = "";
+
   const light = ["#fff", "#f2ead8", "#e4e4e4", "#f7f1c9", "#fff0f4", "#eef1ff"];
   const dark = ["#111", "#222", "#3a3a3a", "#000"];
   const fonts = ["Georgia,serif", "Times New Roman,serif", "Courier New,monospace", "Impact,fantasy", "Arial,sans-serif", "Verdana,sans-serif"];
+
   ransomLines.forEach((line) => {
     const lineEl = document.createElement("div");
     lineEl.className = "ransom-line";
+
     [...line].forEach((ch) => {
       if (ch === " ") {
         const space = document.createElement("span");
@@ -209,14 +300,26 @@ function makeRansomText() {
         lineEl.append(space);
         return;
       }
+
       const span = document.createElement("span");
       span.className = "cut";
       span.textContent = ch;
-      let bg, color;
+
+      let bg;
+      let color;
       const mode = Math.random();
-      if (mode < .26) { bg = dark[Math.floor(Math.random() * dark.length)]; color = "#fff"; }
-      else if (mode < .44) { bg = light[Math.floor(Math.random() * light.length)]; color = "#8a0000"; }
-      else { bg = light[Math.floor(Math.random() * light.length)]; color = "#111"; }
+
+      if (mode < .26) {
+        bg = dark[Math.floor(Math.random() * dark.length)];
+        color = "#fff";
+      } else if (mode < .44) {
+        bg = light[Math.floor(Math.random() * light.length)];
+        color = "#8a0000";
+      } else {
+        bg = light[Math.floor(Math.random() * light.length)];
+        color = "#111";
+      }
+
       span.style.setProperty("--bg", bg);
       span.style.setProperty("--color", color);
       span.style.setProperty("--font", fonts[Math.floor(Math.random() * fonts.length)]);
@@ -225,8 +328,10 @@ function makeRansomText() {
       span.style.setProperty("--rot", `${Math.random() * 10 - 5}deg`);
       span.style.setProperty("--y", `${Math.random() * 5 - 2.5}px`);
       span.style.setProperty("--spacing", `${Math.random() * .08}em`);
+
       lineEl.append(span);
     });
+
     box.append(lineEl);
   });
 }
@@ -237,7 +342,9 @@ $("#closedEnvelope").addEventListener("click", () => {
   showScreen("letter");
   setTimeout(() => $("#startButton").classList.add("show"), 5000);
 });
+
 $("#startButton").addEventListener("click", () => showScreen("study"));
+
 $("#backButton").addEventListener("click", () => {
   $("#studyMap").classList.remove("dimmed");
   showScreen("study");
@@ -245,139 +352,101 @@ $("#backButton").addEventListener("click", () => {
 
 const COLOR_MAPS = {
   study: [
-    ["cabinet", 0, 0, 200],
-    ["book1", 255, 230, 0],
-    ["book2", 0, 190, 0],
-    ["cat", 255, 110, 180],
-    ["fireplace", 0, 200, 255],
-    ["bag", 140, 60, 210],
+    ["cabinet", 0, 100, 240],
+    ["book1", 235, 225, 0],
+    ["book2", 0, 165, 0],
+    ["cat", 240, 70, 220],
+    ["fireplace", 80, 190, 230],
+    ["bag", 150, 0, 230],
     ["gramophone", 230, 0, 0],
-    ["table", 255, 130, 0]
+    ["table", 230, 130, 0]
   ],
   room2: [
     ["bed", 230, 0, 0],
     ["piano", 255, 130, 0],
     ["rose", 255, 230, 0],
     ["chess", 0, 190, 0],
-    ["closet", 0, 200, 255],
-    ["chair2", 0, 0, 200],
-    ["mirror", 140, 60, 210],
-    ["window", 255, 110, 180]
+    ["closet", 0, 210, 255],
+    ["chair2", 0, 0, 230],
+    ["mirror", 170, 0, 230],
+    ["window", 255, 80, 210]
   ]
 };
 
 function loadMask(room, src) {
   const img = new Image();
   img.crossOrigin = "anonymous";
+
   img.onload = () => {
     const canvas = document.createElement("canvas");
     canvas.width = 401;
     canvas.height = 403;
     const ctx = canvas.getContext("2d");
     ctx.drawImage(img, 0, 0, 401, 403);
-    try { maskStore[room] = ctx.getImageData(0, 0, 401, 403); }
-    catch { maskStore[room] = null; }
+
+    try {
+      maskStore[room] = ctx.getImageData(0, 0, 401, 403);
+    } catch {
+      maskStore[room] = null;
+    }
   };
+
   img.src = src;
 }
 
-function getNearestColor(room, r, g, b) {
+function colorSaturation(r, g, b) {
+  return Math.max(r, g, b) - Math.min(r, g, b);
+}
+
+function getNearestColor(room, r, g, b, a) {
+  if (a < 30) return null;
+  if (colorSaturation(r, g, b) < 55) return null;
+
   let best = null;
   let bestDistance = Infinity;
+
   for (const item of COLOR_MAPS[room]) {
     const distance = (r - item[1]) ** 2 + (g - item[2]) ** 2 + (b - item[3]) ** 2;
+
     if (distance < bestDistance) {
       bestDistance = distance;
       best = item[0];
     }
   }
-  return bestDistance < 12000 ? best : null;
+
+  return bestDistance < 15000 ? best : null;
 }
 
-function getStudyTargetByPosition(x, y) {
-  // 서재는 좌표 우선 판정으로 고정한다.
-  // 실제 방 이미지 401x403 기준.
-
-  // 수납장: 왼쪽 유리 장식장. 위쪽 전등 제외.
-  if (x >= 18 && x <= 72 && y >= 156 && y <= 286) return "cabinet";
-
-  // 책장1: 수납장 옆 첫 번째 책장.
-  if (x >= 70 && x <= 148 && y >= 94 && y <= 270) return "book1";
-
-  // 책장2: 사슴 장식 쪽 두 번째 책장.
-  if (x >= 146 && x <= 224 && y >= 70 && y <= 244) return "book2";
-
-  // 고양이: 오른쪽 벽 선반 위.
-  if (x >= 324 && x <= 370 && y >= 98 && y <= 164) return "cat";
-
-  // 벽난로: 오른쪽 아래.
-  if (x >= 306 && x <= 389 && y >= 203 && y <= 292) return "fireplace";
-
-  // 가방: 책상 오른쪽 아래 작은 가방.
-  if (x >= 246 && x <= 305 && y >= 250 && y <= 315) return "bag";
-
-  // 축음기: 아래 중앙 축음기.
-  if (x >= 160 && x <= 226 && y >= 292 && y <= 366) return "gramophone";
-
-  // 협탁: 축음기 아래 받침/협탁.
-  if (x >= 170 && x <= 226 && y >= 350 && y <= 402) return "table";
-
+function room2FallbackByPosition(x, y) {
+  // 마스크 읽기에 실패했을 때만 쓰는 보조 판정. 실제 오브젝트보다 작게 잡았다.
+  if (x >= 27 && x <= 74 && y >= 151 && y <= 294) return "closet";
+  if (x >= 75 && x <= 109 && y >= 165 && y <= 286) return "mirror";
+  if (x >= 125 && x <= 230 && y >= 175 && y <= 270) return "bed";
+  if (x >= 258 && x <= 350 && y >= 174 && y <= 316) return "piano";
+  if (x >= 246 && x <= 275 && y >= 82 && y <= 132) return "rose";
+  if (x >= 346 && x <= 380 && y >= 126 && y <= 234) return "window";
+  if (x >= 125 && x <= 196 && y >= 286 && y <= 346) return "chair2";
+  if (x >= 206 && x <= 273 && y >= 313 && y <= 356) return "chess";
   return null;
 }
-
-
-function getRoom2TargetByPosition(x, y) {
-  // 두 번째 방도 좌표 우선 판정으로 고정한다.
-  // 실제 방 이미지 401x403 기준.
-
-  // 옷장: 왼쪽 큰 옷장
-  if (x >= 18 && x <= 82 && y >= 150 && y <= 304) return "closet";
-
-  // 거울: 왼쪽 옷장 오른쪽의 보라색 거울
-  if (x >= 74 && x <= 120 && y >= 158 && y <= 286) return "mirror";
-
-  // 침대: 중앙 빨간 침대
-  if (x >= 120 && x <= 236 && y >= 164 && y <= 286) return "bed";
-
-  // 피아노: 오른쪽 큰 피아노
-  if (x >= 250 && x <= 360 && y >= 160 && y <= 330) return "piano";
-
-  // 장미: 위쪽 선반 위 노란 장미
-  if (x >= 242 && x <= 282 && y >= 84 && y <= 140) return "rose";
-
-  // 창문: 오른쪽 벽 분홍색 창문
-  if (x >= 344 && x <= 390 && y >= 118 && y <= 248) return "window";
-
-  // 의자: 아래 왼쪽 파란 의자
-  if (x >= 120 && x <= 205 && y >= 270 && y <= 360) return "chair2";
-
-  // 체스: 아래 중앙 초록 체스판
-  if (x >= 210 && x <= 282 && y >= 300 && y <= 360) return "chess";
-
-  return null;
-}
-
 
 function handleMapClick(room, event) {
-  const data = maskStore[room];
-  if (!data) return;
   const rect = event.currentTarget.getBoundingClientRect();
   const x = Math.floor((event.clientX - rect.left) * 401 / rect.width);
   const y = Math.floor((event.clientY - rect.top) * 403 / rect.height);
-  const idx = (y * 401 + x) * 4;
-  const r = data.data[idx];
-  const g = data.data[idx + 1];
-  const b = data.data[idx + 2];
-  const a = data.data[idx + 3];
-  if (a < 20) return;
-  let id = null;
 
-  if (room === "study") {
-    id = getStudyTargetByPosition(x, y);
+  let id = null;
+  const data = maskStore[room];
+
+  if (data) {
+    const idx = (y * 401 + x) * 4;
+    const r = data.data[idx];
+    const g = data.data[idx + 1];
+    const b = data.data[idx + 2];
+    const a = data.data[idx + 3];
+    id = getNearestColor(room, r, g, b, a);
   } else if (room === "room2") {
-    id = getRoom2TargetByPosition(x, y);
-  } else {
-    id = getNearestColor(room, r, g, b);
+    id = room2FallbackByPosition(x, y);
   }
 
   if (id && handlers[id]) handlers[id]();
@@ -386,6 +455,7 @@ function handleMapClick(room, event) {
 document.querySelectorAll(".map-hit-layer").forEach((layer) => {
   layer.addEventListener("click", (event) => handleMapClick(layer.dataset.room, event));
 });
+
 loadMask("study", CONFIG.studyMask);
 loadMask("room2", CONFIG.room2Mask);
 
@@ -400,21 +470,35 @@ function makeLock(correct, onSuccess) {
   const lock = document.createElement("div");
   lock.className = "lock";
   const values = [0, 0, 0, 0, 0];
+
   values.forEach((_, i) => {
     const dial = document.createElement("div");
     dial.className = "dial";
+
     const up = document.createElement("button");
     up.textContent = "▲";
+
     const num = document.createElement("div");
     num.className = "num";
     num.textContent = "0";
+
     const down = document.createElement("button");
     down.textContent = "▼";
-    up.addEventListener("click", () => { values[i] = (values[i] + 1) % 10; num.textContent = values[i]; });
-    down.addEventListener("click", () => { values[i] = (values[i] + 9) % 10; num.textContent = values[i]; });
+
+    up.addEventListener("click", () => {
+      values[i] = (values[i] + 1) % 10;
+      num.textContent = values[i];
+    });
+
+    down.addEventListener("click", () => {
+      values[i] = (values[i] + 9) % 10;
+      num.textContent = values[i];
+    });
+
     dial.append(up, num, down);
     lock.append(dial);
   });
+
   wrap.append(lock);
   wrap.append(makeChoiceList([{
     label: "열기",
@@ -423,33 +507,26 @@ function makeLock(correct, onSuccess) {
       else modal.message.textContent = "열리지 않는다.";
     }
   }]));
+
   return wrap;
 }
 
 async function showFinalLetter() {
-  if (LETTER_API_URL) {
-    try {
-      const response = await fetch(`${LETTER_API_URL}?key=${encodeURIComponent(FINAL_SECRET)}`);
-      const data = await response.json();
+  try {
+    const response = await fetch(`${CONFIG.letterApiUrl}?key=${encodeURIComponent(CONFIG.finalSecret)}`);
+    const data = await response.json();
 
-      if (data.ok && data.letter) {
-        $("#letterContent").textContent = data.letter;
-        closeModal();
-        showScreen("final");
-        return;
-      }
-
-      modal.message.textContent = "편지를 불러오지 못했다.";
-      return;
-    } catch (error) {
-      modal.message.textContent = "편지를 불러오는 중 문제가 생겼다.";
+    if (data.ok && data.letter) {
+      $("#letterContent").textContent = data.letter;
+      closeModal();
+      showScreen("final");
       return;
     }
-  }
 
-  $("#letterContent").textContent = "편지를 불러오지 못했다.";
-  closeModal();
-  showScreen("final");
+    modal.message.textContent = "편지를 불러오지 못했다.";
+  } catch {
+    modal.message.textContent = "편지를 불러오는 중 문제가 생겼다.";
+  }
 }
 
 function openFinalSecretLock() {
@@ -485,6 +562,7 @@ const handlers = {
         $("#studyMap").classList.add("shake");
         setTimeout(() => $("#studyMap").classList.remove("shake"), 500);
         setTimeout(() => $("#studyMap").classList.add("dimmed"), 300);
+
         openModal({
           title: "책장",
           text: "올바른 책을 찾아 꽂으니 책장이 덜컹 움직인다.\n…… 아무래도 이 책장은 문이었던 모양이다.\n책장이 끼이익 소리를 내며 묵직하게 열린다.",
@@ -509,7 +587,10 @@ const handlers = {
   },
 
   fireplace() {
-    openModal({ title: "벽난로", text: "장작 타는 소리가 기분 좋게 들린다." });
+    openModal({
+      title: "벽난로",
+      text: "장작 타는 소리가 기분 좋게 들린다."
+    });
   },
 
   bag() {
@@ -518,10 +599,16 @@ const handlers = {
     postit.className = "postit";
     postit.textContent = "이 가방을 열면 금성제를 만날 수 있다.";
     extra.append(postit);
+
     extra.append(makeLock("31890", () => {
       openFinalSecretLock();
     }));
-    openModal({ title: "가방", text: "가방에는 포스트잇이 붙어 있다.", extra });
+
+    openModal({
+      title: "가방",
+      text: "가방에는 포스트잇이 붙어 있다.",
+      extra
+    });
   },
 
   gramophone() {
@@ -571,7 +658,10 @@ const handlers = {
   },
 
   bed() {
-    openModal({ title: "침대", text: "푹신한 침대다.\n매트리스가 좋은 건지 앉아 보아도 끼익거리는 소리 없이 부드럽다." });
+    openModal({
+      title: "침대",
+      text: "푹신한 침대다.\n매트리스가 좋은 건지 앉아 보아도 끼익거리는 소리 없이 부드럽다."
+    });
   },
 
   piano() {
@@ -596,7 +686,10 @@ const handlers = {
   },
 
   rose() {
-    openModal({ title: "장미 화병", text: "파란색 장미가 꽂혀 있다.\n조화일까?" });
+    openModal({
+      title: "장미 화병",
+      text: "파란색 장미가 꽂혀 있다.\n조화일까?"
+    });
   },
 
   chess() {
