@@ -417,16 +417,92 @@ function getNearestColor(room, r, g, b, a) {
   return bestDistance < 15000 ? best : null;
 }
 
-function room2FallbackByPosition(x, y) {
-  // 마스크 읽기에 실패했을 때만 쓰는 보조 판정. 실제 오브젝트보다 작게 잡았다.
-  if (x >= 27 && x <= 74 && y >= 151 && y <= 294) return "closet";
-  if (x >= 75 && x <= 109 && y >= 165 && y <= 286) return "mirror";
-  if (x >= 125 && x <= 230 && y >= 175 && y <= 270) return "bed";
-  if (x >= 258 && x <= 350 && y >= 174 && y <= 316) return "piano";
-  if (x >= 246 && x <= 275 && y >= 82 && y <= 132) return "rose";
-  if (x >= 346 && x <= 380 && y >= 126 && y <= 234) return "window";
-  if (x >= 125 && x <= 196 && y >= 286 && y <= 346) return "chair2";
-  if (x >= 206 && x <= 273 && y >= 313 && y <= 356) return "chess";
+function room2FallbackByPosition(x, y) { return getRoom2TargetByPolygon(x, y); }
+
+
+function pointInPolygon(x, y, polygon) {
+  let inside = false;
+
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    const xi = polygon[i][0], yi = polygon[i][1];
+    const xj = polygon[j][0], yj = polygon[j][1];
+
+    const intersect = ((yi > y) !== (yj > y)) &&
+      (x < ((xj - xi) * (y - yi)) / (yj - yi) + xi);
+
+    if (intersect) inside = !inside;
+  }
+
+  return inside;
+}
+
+const ROOM2_POLYGONS = [
+  {
+    id: "closet",
+    shapes: [
+      [[25,151],[76,176],[76,298],[24,274]],
+      [[31,145],[76,168],[76,188],[31,166]]
+    ]
+  },
+  {
+    id: "mirror",
+    shapes: [
+      [[76,166],[101,181],[108,270],[77,286],[72,208]]
+    ]
+  },
+  {
+    id: "bed",
+    shapes: [
+      [[124,177],[196,139],[243,163],[169,205]],
+      [[124,177],[169,205],[169,284],[122,256]],
+      [[169,205],[243,163],[243,247],[169,284]]
+    ]
+  },
+  {
+    id: "piano",
+    shapes: [
+      [[261,176],[333,135],[361,164],[289,205]],
+      [[289,205],[361,164],[360,286],[305,321],[252,288]],
+      [[252,288],[289,205],[305,321],[276,337]]
+    ]
+  },
+  {
+    id: "rose",
+    shapes: [
+      [[250,91],[266,78],[279,93],[275,132],[253,137]]
+    ]
+  },
+  {
+    id: "window",
+    shapes: [
+      [[348,120],[388,140],[388,235],[348,218]]
+    ]
+  },
+  {
+    id: "chair2",
+    shapes: [
+      [[124,294],[176,265],[211,284],[160,314]],
+      [[124,294],[160,314],[160,358],[123,337]],
+      [[160,314],[211,284],[207,337],[160,358]]
+    ]
+  },
+  {
+    id: "chess",
+    shapes: [
+      [[207,313],[245,296],[279,314],[238,334]],
+      [[207,313],[238,334],[225,349],[194,331]],
+      [[238,334],[279,314],[263,342],[225,349]]
+    ]
+  }
+];
+
+function getRoom2TargetByPolygon(x, y) {
+  for (const target of ROOM2_POLYGONS) {
+    for (const shape of target.shapes) {
+      if (pointInPolygon(x, y, shape)) return target.id;
+    }
+  }
+
   return null;
 }
 
@@ -436,17 +512,21 @@ function handleMapClick(room, event) {
   const y = Math.floor((event.clientY - rect.top) * 403 / rect.height);
 
   let id = null;
-  const data = maskStore[room];
 
-  if (data) {
+  if (room === "room2") {
+    id = getRoom2TargetByPolygon(x, y);
+  } else {
+    const data = maskStore[room];
+
+    if (!data) return;
+
     const idx = (y * 401 + x) * 4;
     const r = data.data[idx];
     const g = data.data[idx + 1];
     const b = data.data[idx + 2];
     const a = data.data[idx + 3];
+
     id = getNearestColor(room, r, g, b, a);
-  } else if (room === "room2") {
-    id = room2FallbackByPosition(x, y);
   }
 
   if (id && handlers[id]) handlers[id]();
@@ -457,7 +537,6 @@ document.querySelectorAll(".map-hit-layer").forEach((layer) => {
 });
 
 loadMask("study", CONFIG.studyMask);
-loadMask("room2", CONFIG.room2Mask);
 
 function goRoom2() {
   closeModal();
