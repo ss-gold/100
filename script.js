@@ -1,7 +1,7 @@
 
 const CONFIG = {
-  room2Visible: "https://i.imgur.com/U8BGGap.png",
-  room2Mask: "https://i.imgur.com/P58Ey38.png",
+  room2Visible: "https://i.imgur.com/P58Ey38.png",
+  room2Mask: "https://i.imgur.com/U8BGGap.png",
   studyMask: "images/study-mask.png",
   audioTop: "audio/1.mp3",
   audioBottom: "audio/2.mp3",
@@ -292,6 +292,37 @@ function getNearestColor(room, r, g, b) {
   return bestDistance < 12000 ? best : null;
 }
 
+function getStudyTargetByPosition(x, y) {
+  // 서재는 좌표 우선 판정으로 고정한다.
+  // 실제 방 이미지 401x403 기준.
+
+  // 수납장: 왼쪽 유리 장식장. 위쪽 전등 제외.
+  if (x >= 18 && x <= 72 && y >= 156 && y <= 286) return "cabinet";
+
+  // 책장1: 수납장 옆 첫 번째 책장.
+  if (x >= 70 && x <= 148 && y >= 94 && y <= 270) return "book1";
+
+  // 책장2: 사슴 장식 쪽 두 번째 책장.
+  if (x >= 146 && x <= 224 && y >= 70 && y <= 244) return "book2";
+
+  // 고양이: 오른쪽 벽 선반 위.
+  if (x >= 324 && x <= 370 && y >= 98 && y <= 164) return "cat";
+
+  // 벽난로: 오른쪽 아래.
+  if (x >= 306 && x <= 389 && y >= 203 && y <= 292) return "fireplace";
+
+  // 가방: 책상 오른쪽 아래 작은 가방.
+  if (x >= 246 && x <= 305 && y >= 250 && y <= 315) return "bag";
+
+  // 축음기: 아래 중앙 축음기.
+  if (x >= 160 && x <= 226 && y >= 292 && y <= 366) return "gramophone";
+
+  // 협탁: 축음기 아래 받침/협탁.
+  if (x >= 170 && x <= 226 && y >= 350 && y <= 402) return "table";
+
+  return null;
+}
+
 function handleMapClick(room, event) {
   const data = maskStore[room];
   if (!data) return;
@@ -304,13 +335,13 @@ function handleMapClick(room, event) {
   const b = data.data[idx + 2];
   const a = data.data[idx + 3];
   if (a < 20) return;
-  let id = getNearestColor(room, r, g, b);
+  let id = null;
 
-  // 서재 마스크에서 고양이와 가방이 비슷한 보라색이라 위치로 구분
-  if (room === "study" && id === "bag" && x > 315 && y < 180) id = "cat";
-
-  // 벽난로는 오른쪽 아래 벽난로 영역에서만 반응하게 제한
-  if (room === "study" && id === "fireplace" && !(x > 310 && y > 200)) return;
+  if (room === "study") {
+    id = getStudyTargetByPosition(x, y);
+  } else {
+    id = getNearestColor(room, r, g, b);
+  }
 
   if (id && handlers[id]) handlers[id]();
 }
