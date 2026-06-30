@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>연시은 보아라</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:#fff;color:#111;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Noto Sans KR",sans-serif}
+button{font:inherit;cursor:pointer}
+.screen{display:none;min-height:100vh;align-items:center;justify-content:center;padding:18px;background:#fff}
+.screen.active{display:flex}
+#closedEnvelope{width:min(340px,78vw);cursor:pointer;filter:drop-shadow(0 18px 20px rgba(0,0,0,.14));animation:float 2.8s ease-in-out infinite;transition:.2s}
+#closedEnvelope:hover{transform:translateY(-5px) scale(1.02);filter:drop-shadow(0 24px 26px rgba(0,0,0,.2))}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.letter-stage{position:relative;width:min(760px,96vw);min-height:720px;display:flex;align-items:center;justify-content:center}
+.open-envelope{position:absolute;bottom:26px;width:min(470px,88vw);opacity:.9;filter:drop-shadow(0 18px 18px rgba(0,0,0,.14))}
+.paper{position:relative;z-index:2;width:min(610px,94vw);aspect-ratio:1100/1371;background:url("images/paper.png") center/contain no-repeat;padding:clamp(52px,8vw,92px) clamp(32px,6vw,72px);filter:drop-shadow(0 22px 30px rgba(0,0,0,.16));animation:letterIn .55s both}
+@keyframes letterIn{from{opacity:0;transform:translateY(28px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+#ransomText{display:flex;flex-direction:column;gap:clamp(8px,1.7vw,14px);padding-top:clamp(20px,4vw,42px)}
+.ransom-line{display:flex;flex-wrap:wrap;gap:clamp(2px,.8vw,5px);align-items:center;min-height:clamp(25px,5vw,40px)}
+.cut{display:inline-block;min-width:clamp(13px,3.3vw,22px);padding:2px clamp(3px,.9vw,6px) 3px;line-height:1.05;color:var(--c);background:var(--bg);font-family:var(--f);font-size:clamp(16px,4.15vw,var(--s));font-weight:var(--w);transform:rotate(var(--r)) translateY(var(--y));box-shadow:0 1px 2px rgba(0,0,0,.25);letter-spacing:var(--ls);text-align:center}
+.sp{width:clamp(9px,2.1vw,17px);display:inline-block}
+#startButton{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:20;display:none;padding:15px 34px;border:1px solid #111;background:#111;color:#fff;font-size:20px;letter-spacing:.12em;box-shadow:8px 8px 0 rgba(0,0,0,.18)}
+#startButton.show{display:block;animation:startIn .55s both}
+@keyframes startIn{from{opacity:0;transform:translate(-50%,-42%)}to{opacity:1;transform:translate(-50%,-50%)}}
+.room-wrap{position:relative;width:min(760px,96vw);display:flex;align-items:center;justify-content:center;flex-direction:column}
+.map-frame{position:relative;width:min(401px,96vw);aspect-ratio:401/403;image-rendering:pixelated;transition:filter .35s}
+.map-frame.dimmed{filter:brightness(.46)}
+.map-frame.shake{animation:shake .45s}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-4px)}40%{transform:translateX(4px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}
+.map-img{display:block;width:100%;height:100%;image-rendering:pixelated}
+.click-canvas{position:absolute;inset:0;width:100%;height:100%;cursor:pointer}
+.fixed-btn{position:fixed;z-index:12;border:0;background:#111;color:#fff;box-shadow:0 0 18px rgba(255,255,255,.9),0 0 28px rgba(0,0,0,.18);font-size:14px}
+#backBtn{right:18px;bottom:18px;border-radius:999px;padding:10px 15px;display:none}
+#backBtn.active{display:block}
+#invBtn{left:18px;bottom:18px;border-radius:0;padding:10px 14px;display:none}
+#invBtn.active{display:block}
+#musicBtn{left:50%;bottom:18px;transform:translateX(-50%);border-radius:999px;padding:10px 16px;display:none}
+#musicBtn.active{display:block}
+.modal-backdrop{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(255,255,255,.58)}
+.modal-backdrop.active{display:flex}
+.modal{width:min(530px,92vw);max-height:min(78vh,720px);overflow-y:auto;background:rgba(30,30,30,.88);color:#f6f6f6;border:1px solid rgba(255,255,255,.34);box-shadow:0 0 18px rgba(255,255,255,.92),0 0 36px rgba(255,255,255,.48);border-radius:0;padding:25px;backdrop-filter:blur(3px)}
+.modal h2{margin:0 0 14px;font-size:22px;font-weight:900;color:#fff}
+.modal p{margin:0;line-height:1.78;color:#f1f1f1;white-space:pre-line}
+.choice-list{margin-top:20px}
+.choice{display:block;margin:7px 0;color:#fff;text-decoration:none;line-height:1.6;cursor:pointer;user-select:none}
+.choice:hover{color:#dcdcdc}
+.modal-actions{display:flex;justify-content:flex-end;margin-top:18px}
+.modal-actions button{border:1px solid rgba(255,255,255,.34);background:transparent;color:#fff;padding:8px 13px;border-radius:0}
+.text-answer{width:100%;margin-top:16px;padding:11px 12px;border:1px solid rgba(255,255,255,.34);background:#111;color:#fff;font:inherit;outline:none}
+.msg{min-height:22px;margin-top:8px;color:#ffb9b9;font-size:14px}
+.postit{width:min(270px,88%);min-height:130px;margin:16px auto 18px;padding:22px 18px;background:#fff6a6;color:#111;font-weight:800;line-height:1.65;transform:rotate(-2deg);box-shadow:0 8px 18px rgba(0,0,0,.24);text-align:center}
+.lock{display:flex;justify-content:center;gap:7px;margin:16px 0 12px}
+.dial{width:48px;border:1px solid rgba(255,255,255,.35);background:#111;overflow:hidden}
+.dial button{width:100%;height:28px;border:0;background:#333;color:#fff;padding:0;border-radius:0}
+.num{height:54px;display:flex;align-items:center;justify-content:center;background:#e9e9e9;color:#111;border-top:1px solid #000;border-bottom:1px solid #000;font-size:28px;font-weight:900;font-family:"Courier New",monospace}
+.inv-grid{display:grid;grid-template-columns:1fr;gap:8px;margin-top:12px}
+.inv-item{display:flex;align-items:center;gap:10px;min-height:38px;color:#fff;cursor:pointer}
+.inv-item:hover{color:#dcdcdc}
+.inv-item img{width:34px;height:34px;object-fit:contain;image-rendering:pixelated}
+.memo-icon{display:inline-flex;width:34px;height:34px;align-items:center;justify-content:center;background:#f6e9c8;color:#111;font-weight:900;border:1px solid #111}
+.letter-page{width:min(680px,92vw);max-height:82vh;overflow-y:auto;padding:34px 28px;border:1px solid #111;background:#fff;box-shadow:12px 12px 0 #111;line-height:1.8;white-space:pre-line}
+.letter-page h1{margin:0 0 18px;font-size:24px}
+@media(max-width:480px){.screen{padding:16px}.letter-stage{min-height:620px}.paper{width:min(550px,98vw);padding-left:26px;padding-right:26px}#ransomText{padding-top:48px;gap:9px}#startButton{font-size:18px;padding:13px 28px}.modal{padding:21px}.lock{gap:5px}.dial{width:42px}.num{height:48px;font-size:25px}}
+</style>
+</head>
+<body>
+<main id="intro" class="screen active"><img id="closedEnvelope" src="https://i.imgur.com/jrYR7UI.png" alt="편지봉투"></main>
+<section id="letter" class="screen"><div class="letter-stage"><img class="open-envelope" src="https://i.imgur.com/Ln5MVpU.png" alt=""><article class="paper"><div id="ransomText"></div></article><button id="startButton">시작하기</button></div></section>
+<section id="study" class="screen"><div class="room-wrap"><div id="studyMap" class="map-frame"><img class="map-img" src="images/study.png" alt="서재"><canvas id="studyCanvas" class="click-canvas" width="401" height="403"></canvas></div></div></section>
+<section id="room2" class="screen"><div class="room-wrap"><div id="room2Map" class="map-frame"><img class="map-img" src="https://i.imgur.com/P58Ey38.png" alt="두 번째 방"><canvas id="room2Canvas" class="click-canvas" width="401" height="403"></canvas></div></div></section>
+<section id="final" class="screen"><article class="letter-page"><h1>편지</h1><div id="letterContent"></div></article></section>
+<button id="backBtn" class="fixed-btn">서재로 이동</button>
+<button id="invBtn" class="fixed-btn">인벤토리</button>
+<button id="musicBtn" class="fixed-btn">일시정지</button>
+<audio id="bgm" preload="auto"></audio>
+<div id="modalBg" class="modal-backdrop"><div class="modal"><h2 id="modalTitle"></h2><p id="modalText"></p><div id="modalExtra"></div><div id="modalMsg" class="msg"></div><div id="modalActions" class="modal-actions"></div></div></div>
+<script>
+const IMG={studyMask:"images/study-mask.png",room2Mask:"https://i.imgur.com/U8BGGap.png"};
+const AUDIO={top:"audio/1.mp3",bottom:"audio/2.mp3"};
+const UNIF={ganghak:"https://i.imgur.com/cNkbT1s.png",byeoksan:"https://i.imgur.com/755qF5Q.png",yeoil:"https://i.imgur.com/eTxoLYh.png",eunjang:"https://i.imgur.com/Zmxad9Y.png",jiseong:"https://i.imgur.com/45hLNMb.png"};
+const ITEMS={
+byeoksan:{type:"uniform",name:"벽산 교복",img:UNIF.byeoksan},eunjang:{type:"uniform",name:"은장 교복",img:UNIF.eunjang},ganghak:{type:"uniform",name:"강학 교복",img:UNIF.ganghak},yeoil:{type:"uniform",name:"여일 교복",img:UNIF.yeoil},jiseong:{type:"uniform",name:"지성 교복",img:UNIF.jiseong},chair:{type:"tool",name:"의자"},
+memoCat:{type:"memo",name:"숫자야구 메모",code:"27831",result:"1S 2B"},memoTop:{type:"memo",name:"숫자야구 메모",code:"97083",result:"0S 4B"},memoBottom:{type:"memo",name:"숫자야구 메모",code:"79436",result:"0S 2B"},memoPiano:{type:"memo",name:"숫자야구 메모",code:"54930",result:"1S 2B"},memoMirror:{type:"memo",name:"숫자야구 메모",code:"23509",result:"0S 3B"},memoWindow:{type:"memo",name:"숫자야구 메모",code:"65249",result:"0S 1B"}};
+const st={inv:loadInv(),bgm:null};
+const $=q=>document.querySelector(q);
+const screens={intro:$("#intro"),letter:$("#letter"),study:$("#study"),room2:$("#room2"),final:$("#final")};
+const modal={bg:$("#modalBg"),title:$("#modalTitle"),text:$("#modalText"),extra:$("#modalExtra"),msg:$("#modalMsg"),actions:$("#modalActions")};
+function show(n){Object.values(screens).forEach(s=>s.classList.remove("active"));screens[n].classList.add("active");$("#invBtn").classList.toggle("active",["study","room2"].includes(n));$("#backBtn").classList.toggle("active",n==="room2");window.scrollTo(0,0)}
+function loadInv(){try{return JSON.parse(localStorage.getItem("ysi_inv")||"[]")}catch(e){return[]}}
+function saveInv(){localStorage.setItem("ysi_inv",JSON.stringify(st.inv))}
+function has(id){return st.inv.includes(id)}
+function addItem(id){if(!has(id)){st.inv.push(id);saveInv();return true}return false}
+function normalize(v){return (v||"").trim().replace(/\s+/g,"").toLowerCase()}
+function lines(t){return t.replace(/\.\s*/g,".\n").replace(/\?\s*/g,"?\n").replace(/!\s*/g,"!\n").replace(/……\s*/g,"……\n").replace(/\n{2,}/g,"\n").trim()}
+function openModal(o){modal.title.textContent=o.title||"";modal.text.textContent=lines(o.text||"");modal.extra.innerHTML="";modal.msg.textContent="";modal.actions.innerHTML="";if(o.extra)modal.extra.append(o.extra);if(o.choices)modal.extra.append(choiceList(o.choices));const b=document.createElement("button");b.textContent="닫기";b.onclick=closeModal;modal.actions.append(b);modal.bg.classList.add("active")}
+function closeModal(){modal.bg.classList.remove("active")}
+modal.bg.addEventListener("click",e=>{if(e.target===modal.bg)closeModal()});
+function choiceList(arr){const d=document.createElement("div");d.className="choice-list";arr.forEach(c=>{const a=document.createElement("a");a.className="choice";a.textContent="▶ "+c.label;a.onclick=c.onClick;d.append(a)});return d}
+function answerBox(correct,ok,ph="정답 입력"){const d=document.createElement("div"),i=document.createElement("input");i.className="text-answer";i.placeholder=ph;d.append(i);d.append(choiceList([{label:"확인",onClick:()=>{if(normalize(i.value)===normalize(correct))ok();else modal.msg.textContent="틀렸다."}}]));i.onkeydown=e=>{if(e.key==="Enter")d.querySelector(".choice").click()};return d}
+function memoChoice(id){return {label:has(id)?"✓ 메모를 챙겼다":"메모 챙기기",onClick:()=>{if(addItem(id))modal.msg.textContent="메모를 인벤토리에 넣었다.";else modal.msg.textContent="이미 챙겼다."}}}
+function inventoryPicker(onPick){const d=document.createElement("div");d.className="inv-grid";if(st.inv.length===0){const p=document.createElement("p");p.textContent="아무것도 없다.";d.append(p);return d}st.inv.forEach(id=>{const it=ITEMS[id];const row=document.createElement("div");row.className="inv-item";if(it.img){const im=document.createElement("img");im.src=it.img;row.append(im)}else if(it.type==="memo"){const m=document.createElement("span");m.className="memo-icon";m.textContent="쪽";row.append(m)}else{const m=document.createElement("span");m.className="memo-icon";m.textContent="의";row.append(m)}const name=document.createElement("span");name.textContent=it.type==="memo"?`${it.code} ${it.result}`:it.name;row.append(name);row.onclick=()=>onPick(id,it);d.append(row)});return d}
+function openInventory(){openModal({title:"인벤토리",text:"",extra:inventoryPicker((id,it)=>{if(it.type==="memo")openModal({title:"숫자야구 메모",text:`${it.code}\n${it.result}`})})})}
+$("#invBtn").onclick=openInventory;
+function play(src){const a=$("#bgm");if(st.bgm!==src){a.src=src;st.bgm=src}a.play().catch(()=>{});$("#musicBtn").classList.add("active");$("#musicBtn").textContent="일시정지"}
+$("#musicBtn").onclick=()=>{const a=$("#bgm");if(a.paused){a.play();$("#musicBtn").textContent="일시정지"}else{a.pause();$("#musicBtn").textContent="재생"}};
+const ransom=["연시은 보아라.","네 남자 친구 금성제를 납치했다.","금성제를 돌려받고 싶으면","그 방에서 탈출해라.","기간은 100일인 7월 2일까지.","행운을 빈다."];
+function makeRansom(){const box=$("#ransomText");box.innerHTML="";const lb=["#fff","#f2ead8","#e4e4e4","#f7f1c9","#fff0f4","#eef1ff"],db=["#111","#222","#3a3a3a","#000"],fonts=["Georgia,serif","Times New Roman,serif","Courier New,monospace","Impact,fantasy","Arial,sans-serif","Verdana,sans-serif"];ransom.forEach(line=>{const l=document.createElement("div");l.className="ransom-line";[...line].forEach(ch=>{if(ch===" "){const s=document.createElement("span");s.className="sp";l.append(s);return}const sp=document.createElement("span");sp.className="cut";sp.textContent=ch;let bg,c;let r=Math.random();if(r<.26){bg=db[Math.floor(Math.random()*db.length)];c="#fff"}else if(r<.44){bg=lb[Math.floor(Math.random()*lb.length)];c="#8a0000"}else{bg=lb[Math.floor(Math.random()*lb.length)];c="#111"}sp.style.setProperty("--bg",bg);sp.style.setProperty("--c",c);sp.style.setProperty("--f",fonts[Math.floor(Math.random()*fonts.length)]);sp.style.setProperty("--s",(18+Math.floor(Math.random()*11))+"px");sp.style.setProperty("--w",Math.random()>.42?"800":"500");sp.style.setProperty("--r",(Math.random()*10-5)+"deg");sp.style.setProperty("--y",(Math.random()*5-2.5)+"px");sp.style.setProperty("--ls",(Math.random()*.08)+"em");l.append(sp)});box.append(l)})}
+$("#closedEnvelope").onclick=()=>{makeRansom();$("#startButton").classList.remove("show");show("letter");setTimeout(()=>$("#startButton").classList.add("show"),5000)};
+$("#startButton").onclick=()=>show("study");
+$("#backBtn").onclick=()=>{$("#studyMap").classList.remove("dimmed");show("study")};
+const colorMaps={study:[["cabinet",0,0,200],["book1",255,230,0],["book2",0,190,0],["cat",255,110,180],["fireplace",0,200,255],["bag",140,60,210],["gramophone",230,0,0],["table",255,130,0]],room2:[["bed",230,0,0],["piano",255,130,0],["rose",255,230,0],["chess",0,190,0],["closet",0,200,255],["chair2",0,0,200],["mirror",140,60,210],["window",255,110,180]]};
+const maskData={};
+function loadMask(key,canvasId,src){const img=new Image();img.crossOrigin="anonymous";img.onload=()=>{const c=$(canvasId),ctx=c.getContext("2d");ctx.drawImage(img,0,0,c.width,c.height);try{maskData[key]=ctx.getImageData(0,0,c.width,c.height)}catch(e){maskData[key]=null}};img.src=src}
+function nearestColor(key,r,g,b){let best=null,bd=1e9;for(const m of colorMaps[key]){let d=(r-m[1])**2+(g-m[2])**2+(b-m[3])**2;if(d<bd){bd=d;best=m[0]}}return bd<12000?best:null}
+function maskClick(key,canvas,e){const rect=canvas.getBoundingClientRect(),x=Math.floor((e.clientX-rect.left)*canvas.width/rect.width),y=Math.floor((e.clientY-rect.top)*canvas.height/rect.height),data=maskData[key];if(!data)return;const i=(y*data.width+x)*4,r=data.data[i],g=data.data[i+1],b=data.data[i+2],a=data.data[i+3];if(a<20)return;const id=nearestColor(key,r,g,b);if(id&&handlers[id])handlers[id]()}
+loadMask("study","#studyCanvas",IMG.studyMask);loadMask("room2","#room2Canvas",IMG.room2Mask);
+$("#studyCanvas").onclick=e=>maskClick("study",$("#studyCanvas"),e);$("#room2Canvas").onclick=e=>maskClick("room2",$("#room2Canvas"),e);
+function goRoom2(){closeModal();$("#studyMap").classList.remove("dimmed");show("room2")}
+function lockUI(correct,ok){const d=document.createElement("div"),lock=document.createElement("div");lock.className="lock";const vals=[0,0,0,0,0];vals.forEach((v,i)=>{const di=document.createElement("div");di.className="dial";const up=document.createElement("button");up.textContent="▲";const n=document.createElement("div");n.className="num";n.textContent="0";const down=document.createElement("button");down.textContent="▼";up.onclick=()=>{vals[i]=(vals[i]+1)%10;n.textContent=vals[i]};down.onclick=()=>{vals[i]=(vals[i]+9)%10;n.textContent=vals[i]};di.append(up,n,down);lock.append(di)});d.append(lock);d.append(choiceList([{label:"열기",onClick:()=>{if(vals.join("")===correct)ok();else modal.msg.textContent="열리지 않는다."}}]));return d}
+function showFinalLetter(){$("#letterContent").textContent=`To. 연시은
+야, 졸라 신기하긴 하다. 어떻게 벌써 100일이지?
+처음 네가 누가 봐도 구라인 것처럼 고백했을 땐 상상도 못했는데.
+동해물과 백두산이 마르고 닳도록
+하느님이 보우하사 우리나라 만세
+무궁화 삼천리 화려강산
+대한사람 대한으로 길이 보전하세
+남산위에 저 소나무 철갑을 두른 듯
+바람서리 불변함은 우리 기상일세
+무궁화 삼천리 화려강산
+대한사람 대한으로 길이 보전하세
+가을하늘 공활한데 높고 구름 없이
+밝은 달은 우리 가슴 일편단심일세
+무궁화 삼천리 화려강산
+대한사람 대한으로 길이 보전하세
+이 기상과 이맘으로 충성을 다하여
+괴로우나 즐거우나 나라 사랑하세
+무궁화 삼천리 화려강산
+대한사람 대한으로 길이 보전하세
+
+From. 금성제`;closeModal();show("final")}
+const handlers={
+cabinet(){openModal({title:"수납장",text:"수납장을 열었다. 안쪽에는 책 몇 권과 스크랩북이 들어 있었다. 스크랩북에는 영화 티켓이 들어 있다. 영화 제목은…… '♠♠♤●●●○◇◇◇.' 같이 봤던 영화 티켓인데. 금성제가 스크랩을 해둔 건가?"})},
+book1(){openModal({title:"책장",text:"영화 대본집, 추리 소설, 모모, 그리고 문제집, 참고서들이 가득하다. 가장 밑 칸에 들어있는 건…… 미스터리 잡지인 '■■ □□□□'. 금성제가 가지고 있다고 말했던 책인 것 같다."})},
+book2(){openModal({title:"책장",text:"갖가지 책들이 엉망진창으로 꽂혀 있다. 표지도 제각각, 장르도 제각각. 이래서는 원하는 책을 한 번에 찾기 힘들지 않나? 심지어는 뒤집힌 책들도 있다. …… 어? 잠깐, 자세히 보니 책장 한 구역이 붉게 표시되어 있다. '책을 올바른 순서로 꽂아 책 제목의 첫 글자만 읽었을 때 ■■♠♠□□□□(이)가 되도록 맞춰라.' 라고 적혀 있다.",extra:answerBox("계간악마미스터리",()=>{$("#studyMap").classList.add("shake");setTimeout(()=>$("#studyMap").classList.remove("shake"),500);setTimeout(()=>$("#studyMap").classList.add("dimmed"),300);openModal({title:"책장",text:"올바른 책을 찾아 꽂으니 책장이 덜컹 움직인다. …… 아무래도 이 책장은 문이었던 모양이다. 책장이 끼이익 소리를 내며 묵직하게 열린다.",choices:[{label:"다음 방으로 이동",onClick:goRoom2}]})})})},
+cat(){openModal({title:"고양이 인형",text:"금성제에게 줬던 고양이 인형……인 줄 알았는데 약간 다르다. 이 고양이 인형은 턱시도지만, 금성제에게 줬던 인형은, 그냥 검은 고양이였으니까. 그러니까, 그게, 어디에서 샀던 거더라. 가게 이름이 뭐였지?",extra:answerBox("말랑필로우",()=>openModal({title:"고양이 인형",text:"맞아. 그런 이름이었지. 아슬아슬한 높이 탓에 손을 겨우 뻗어 고양이 인형을 집었다. 고양이 인형의 배에는 '27831 1S 2B' 라고 적혀 있다. 숫자 야구 같네.",choices:[memoChoice("memoCat")]}))})},
+fireplace(){openModal({title:"벽난로",text:"장작 타는 소리가 기분 좋게 들린다."})},
+bag(){const e=document.createElement("div"),p=document.createElement("div");p.className="postit";p.textContent="이 가방을 열면 금성제를 만날 수 있다.";e.append(p,lockUI("31890",()=>openModal({title:"가방",text:"가방이 열렸다! 안에는……",choices:[{label:"편지 읽기",onClick:showFinalLetter}]})));openModal({title:"가방",text:"가방에는 포스트잇이 붙어 있다.",extra:e})},
+gramophone(){openModal({title:"축음기",text:"축음기처럼 생겼지만 자세히 보니 블루투스 스피커다. 유튜브와 연결된 듯한데……. 귀에 익은 노래가 흘러나온다. 이 노래는 분명, 그때 금성제한테 좋다고 했던 극아타의……."})},
+table(){openModal({title:"협탁",text:"축음기 아래의 협탁은 위, 아래 둘로 나뉘어 있다. 둘 다 잠겨 있는 것 같고……. 어느 쪽부터 풀어볼까?",choices:[{label:"위쪽 칸",onClick:()=>openModal({title:"위쪽 칸",text:"위쪽 칸에는 암호가 걸려 있다.",extra:answerBox("면목중학교",()=>{play(AUDIO.top);openModal({title:"협탁",text:"서랍이 열렸다. 신기하게 노래가 흘러나온다. 서랍 안에는 '97083 0S 4B'라고 적힌 메모가 들어 있었다. 숫자 야구 같네.",choices:[memoChoice("memoTop")]})})})},{label:"아래쪽 칸",onClick:()=>openModal({title:"아래쪽 칸",text:"아래쪽 칸에는 암호가 걸려 있다.",extra:answerBox("다시다시만나",()=>{play(AUDIO.bottom);openModal({title:"협탁",text:"서랍이 열렸다. 신기하게 노래가 흘러나온다. 서랍 안에는 '79436 0S 2B'라고 적힌 메모가 들어 있었다. 숫자 야구 같네.",choices:[memoChoice("memoBottom")]})})})}]})},
+bed(){openModal({title:"침대",text:"푹신한 침대다. 매트리스가 좋은 건지 앉아 보아도 끼익거리는 소리 없이 부드럽다."})},
+piano(){openModal({title:"그랜드 피아노",text:"건반을 아무거나 눌러 보면 좋은 소리가 울린다. 제법 고급스러운 피아노인 것 같다.",choices:[{label:"연주하기",onClick:()=>openModal({title:"그랜드 피아노",text:"어떤 곡을 연주할까?",extra:answerBox("코끼리",()=>openModal({title:"그랜드 피아노",text:"코끼리를 전부 연주하자 앉아 있던 피아노 의자에서 달칵 소리가 난다. 일어나서 열어 보면, 안에는 작은 종이 쪽지가 들어 있었다. '54930 1S 2B'. 숫자 야구 같네.",choices:[memoChoice("memoPiano")]}))})}]})},
+rose(){openModal({title:"장미 화병",text:"파란색 장미가 꽂혀 있다. 조화일까?"})},
+chess(){openModal({title:"체스 판",text:"체스다. 금성제는 체스를 둘 줄 알까?"})},
+closet(){openModal({title:"옷장",text:"옷장을 열었다. 안에는 교복이 여러 벌 들어있다. 벽산, 은장, 강학, 여일, 지성……? 뒤에 두 개는 왜 들어있는 거지?",choices:[["byeoksan","벽산 교복 챙기기"],["eunjang","은장 교복 챙기기"],["ganghak","강학 교복 챙기기"],["yeoil","여일 교복 챙기기"],["jiseong","지성 교복 챙기기"]].map(x=>({label:has(x[0])?"✓ "+ITEMS[x[0]].name:x[1],onClick:()=>{if(addItem(x[0]))modal.msg.textContent=ITEMS[x[0]].name+"을 챙겼다.";else modal.msg.textContent="이미 챙겼다."}}))})},
+chair2(){openModal({title:"의자",text:"의자다. 조금 무겁지만 이 방 안에서라면 옮길 수 있을 것 같다.",choices:[{label:has("chair")?"✓ 의자를 챙겼다":"의자 챙기기",onClick:()=>{if(addItem("chair"))modal.msg.textContent="의자를 챙겼다.";else modal.msg.textContent="이미 챙겼다."}}]})},
+mirror(){openModal({title:"거울",text:"거울에 모습이 비친다. 금성제가 좋아하는…….",choices:[{label:"옷을 갈아입는다",onClick:()=>{openModal({title:"인벤토리",text:"어떤 옷을 입어 볼까?",extra:inventoryPicker((id,it)=>wearUniform(id,it))})}}]})},
+window(){openModal({title:"창문",text:"걷힌 커튼 사이로 햇빛이 들어온다. 납치범이 가둔 방치고는 제법 따스하고 평화롭다. 어라? 창틀 위쪽에 뭔가가 있는 것 같은데……. 손이 안 닿아.",choices:[{label:"도구 사용하기",onClick:()=>openModal({title:"인벤토리",text:"무엇을 사용할까?",extra:inventoryPicker((id,it)=>{if(id==="chair")openModal({title:"창문",text:"의자를 밟고 올라가 창틀 위에 있는 것을 집었다. 새콤달콤 울트라 키위 맛? 아래에 작은 쪽지가 깔려 있다. '65249 0S 1B' 숫자 야구처럼 보인다.",choices:[memoChoice("memoWindow")]});else modal.msg.textContent="이걸로는 닿지 않을 것 같다."})})}]})}
+};
+function wearUniform(id,it){if(it.type!=="uniform"){modal.msg.textContent="이건 입을 수 없어…….";return}const texts={yeoil:"여일고 교복을 입은 모습이 거울에 비친다. 나백진이 입었을 땐 좀 더 차가워 보이는 이미지였는데……. 팔을 내리면 소매에 손이 가려지는 게, 사이즈도 조금 큰 것 같다. 누구 교복인 거지?",jiseong:"지성고 교복을 입은 모습이 거울에 비친다. 이런 교복이었던가? 사실 잘 기억은 안 난다. 조금 어색하네…….",byeoksan:"벽산고 교복을 입은 모습이 거울에 비친다. ……. 금성제가 보면 어떤 반응일까?",ganghak:"강학고 교복을 입은 모습이 거울에 비친다. 금성제가 자주 입던 호랑이 그림 티셔츠까지 입고 나니 뭔가, 굉장히 오묘한 느낌이 든다. 금성제는 어디 있는 거지?",eunjang:"은장고 교복을 입은 모습이 거울에 비친다. 익숙한 모습, 익숙한 냄새. 혹시 내 교복인가? 어라, 주머니에 뭔가가 들어있다. '23509 0S 3B' 라고 적힌 쪽지. 숫자 야구 같네."};openModal({title:"거울",text:texts[id],choices:id==="eunjang"?[memoChoice("memoMirror")]:[]})}
+</script>
+</body>
+</html>
