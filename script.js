@@ -18,6 +18,10 @@ const CONFIG = {
 
 const STORAGE_KEY = "ysi_escape_final_v2_inventory";
 
+// Google Apps Script 웹 앱 URL을 나중에 여기에 넣으면 됩니다.
+const LETTER_API_URL = "https://script.google.com/macros/s/AKfycbzC2zYTUMFx0DlFYRavlXB9-yXBS6zs5KokuJklHHDqVZyZkXUgq4Gwowb995X746jrdg/exec";
+const FINAL_SECRET = "NO SMOKING";
+
 const ITEMS = {
   byeoksan: { type: "uniform", name: "벽산 교복", img: CONFIG.uniforms.byeoksan },
   eunjang: { type: "uniform", name: "은장 교복", img: CONFIG.uniforms.eunjang },
@@ -65,6 +69,7 @@ function addItem(id) {
   return false;
 }
 function normalizeAnswer(value) { return (value || "").trim().replace(/\s+/g, "").toLowerCase(); }
+function normalizeSecret(value) { return (value || "").trim().replace(/\s+/g, "").toLowerCase(); }
 function formatText(text) {
   return String(text || "").replaceAll("…….", "……").replace(/\n{3,}/g, "\n\n").trim();
 }
@@ -424,7 +429,28 @@ function makeLock(correct, onSuccess) {
   return wrap;
 }
 
-function showFinalLetter() {
+async function showFinalLetter() {
+  if (LETTER_API_URL) {
+    try {
+      const response = await fetch(`${LETTER_API_URL}?key=${encodeURIComponent(FINAL_SECRET)}`);
+      const data = await response.json();
+
+      if (data.ok && data.letter) {
+        $("#letterContent").textContent = data.letter;
+        closeModal();
+        showScreen("final");
+        return;
+      }
+
+      modal.message.textContent = "편지를 불러오지 못했다.";
+      return;
+    } catch (error) {
+      modal.message.textContent = "편지를 불러오는 중 문제가 생겼다.";
+      return;
+    }
+  }
+
+  // Apps Script URL을 넣기 전 테스트용 예시 편지
   $("#letterContent").textContent = `To. 연시은
 야, 졸라 신기하긴 하다. 어떻게 벌써 100일이지?
 처음 네가 누가 봐도 구라인 것처럼 고백했을 땐 상상도 못했는데.
@@ -448,6 +474,17 @@ function showFinalLetter() {
 From. 금성제`;
   closeModal();
   showScreen("final");
+}
+
+
+function openFinalSecretLock() {
+  openModal({
+    title: "가방",
+    text: "가방이 열렸다!\n……응?\n열린 줄 알았는데 잠금 장치가 하나 더 있었던 모양이다.\n'우리 집 이름, 영어 9글자.' 라고 적혀 있다.",
+    extra: makeAnswerBox("NO SMOKING", () => {
+      showFinalLetter();
+    }, "마지막 암호 입력")
+  });
 }
 
 const handlers = {
@@ -507,11 +544,7 @@ const handlers = {
     postit.textContent = "이 가방을 열면 금성제를 만날 수 있다.";
     extra.append(postit);
     extra.append(makeLock("31890", () => {
-      openModal({
-        title: "가방",
-        text: "가방이 열렸다!\n안에는……",
-        choices: [{ label: "편지 읽기", onClick: showFinalLetter }]
-      });
+      openFinalSecretLock();
     }));
     openModal({ title: "가방", text: "가방에는 포스트잇이 붙어 있다.", extra });
   },
