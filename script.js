@@ -323,6 +323,39 @@ function getStudyTargetByPosition(x, y) {
   return null;
 }
 
+
+function getRoom2TargetByPosition(x, y) {
+  // 두 번째 방도 좌표 우선 판정으로 고정한다.
+  // 실제 방 이미지 401x403 기준.
+
+  // 옷장: 왼쪽 큰 옷장
+  if (x >= 18 && x <= 82 && y >= 150 && y <= 304) return "closet";
+
+  // 거울: 왼쪽 옷장 오른쪽의 보라색 거울
+  if (x >= 74 && x <= 120 && y >= 158 && y <= 286) return "mirror";
+
+  // 침대: 중앙 빨간 침대
+  if (x >= 120 && x <= 236 && y >= 164 && y <= 286) return "bed";
+
+  // 피아노: 오른쪽 큰 피아노
+  if (x >= 250 && x <= 360 && y >= 160 && y <= 330) return "piano";
+
+  // 장미: 위쪽 선반 위 노란 장미
+  if (x >= 242 && x <= 282 && y >= 84 && y <= 140) return "rose";
+
+  // 창문: 오른쪽 벽 분홍색 창문
+  if (x >= 344 && x <= 390 && y >= 118 && y <= 248) return "window";
+
+  // 의자: 아래 왼쪽 파란 의자
+  if (x >= 120 && x <= 205 && y >= 270 && y <= 360) return "chair2";
+
+  // 체스: 아래 중앙 초록 체스판
+  if (x >= 210 && x <= 282 && y >= 300 && y <= 360) return "chess";
+
+  return null;
+}
+
+
 function handleMapClick(room, event) {
   const data = maskStore[room];
   if (!data) return;
@@ -339,6 +372,8 @@ function handleMapClick(room, event) {
 
   if (room === "study") {
     id = getStudyTargetByPosition(x, y);
+  } else if (room === "room2") {
+    id = getRoom2TargetByPosition(x, y);
   } else {
     id = getNearestColor(room, r, g, b);
   }
