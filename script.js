@@ -17,8 +17,6 @@ const CONFIG = {
 };
 
 const STORAGE_KEY = "ysi_escape_final_v2_inventory";
-
-// Google Apps Script 웹 앱 URL을 나중에 여기에 넣으면 됩니다.
 const LETTER_API_URL = "https://script.google.com/macros/s/AKfycbzC2zYTUMFx0DlFYRavlXB9-yXBS6zs5KokuJklHHDqVZyZkXUgq4Gwowb995X746jrdg/exec";
 const FINAL_SECRET = "NO SMOKING";
 
@@ -69,7 +67,6 @@ function addItem(id) {
   return false;
 }
 function normalizeAnswer(value) { return (value || "").trim().replace(/\s+/g, "").toLowerCase(); }
-function normalizeSecret(value) { return (value || "").trim().replace(/\s+/g, "").toLowerCase(); }
 function formatText(text) {
   return String(text || "").replaceAll("…….", "……").replace(/\n{3,}/g, "\n\n").trim();
 }
@@ -450,32 +447,10 @@ async function showFinalLetter() {
     }
   }
 
-  // Apps Script URL을 넣기 전 테스트용 예시 편지
-  $("#letterContent").textContent = `To. 연시은
-야, 졸라 신기하긴 하다. 어떻게 벌써 100일이지?
-처음 네가 누가 봐도 구라인 것처럼 고백했을 땐 상상도 못했는데.
-동해물과 백두산이 마르고 닳도록
-하느님이 보우하사 우리나라 만세
-무궁화 삼천리 화려강산
-대한사람 대한으로 길이 보전하세
-남산위에 저 소나무 철갑을 두른 듯
-바람서리 불변함은 우리 기상일세
-무궁화 삼천리 화려강산
-대한사람 대한으로 길이 보전하세
-가을하늘 공활한데 높고 구름 없이
-밝은 달은 우리 가슴 일편단심일세
-무궁화 삼천리 화려강산
-대한사람 대한으로 길이 보전하세
-이 기상과 이맘으로 충성을 다하여
-괴로우나 즐거우나 나라 사랑하세
-무궁화 삼천리 화려강산
-대한사람 대한으로 길이 보전하세
-
-From. 금성제`;
+  $("#letterContent").textContent = "편지를 불러오지 못했다.";
   closeModal();
   showScreen("final");
 }
-
 
 function openFinalSecretLock() {
   openModal({
