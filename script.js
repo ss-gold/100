@@ -1,7 +1,7 @@
 
 const CONFIG = {
-  room2Visible: "https://i.imgur.com/P58Ey38.png",
-  room2Mask: "https://i.imgur.com/U8BGGap.png",
+  room2Visible: "https://i.imgur.com/U8BGGap.png",
+  room2Mask: "https://i.imgur.com/P58Ey38.png",
   studyMask: "images/study-mask.png",
   audioTop: "audio/1.mp3",
   audioBottom: "audio/2.mp3",
@@ -308,6 +308,9 @@ function handleMapClick(room, event) {
 
   // 서재 마스크에서 고양이와 가방이 비슷한 보라색이라 위치로 구분
   if (room === "study" && id === "bag" && x > 315 && y < 180) id = "cat";
+
+  // 벽난로는 오른쪽 아래 벽난로 영역에서만 반응하게 제한
+  if (room === "study" && id === "fireplace" && !(x > 310 && y > 200)) return;
 
   if (id && handlers[id]) handlers[id]();
 }
